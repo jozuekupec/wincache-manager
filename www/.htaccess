@@ -1,0 +1,100 @@
+# Apache 2.4
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+<IfModule mod_access_compat.c>
+    Order deny,allow
+    Allow from all
+</IfModule>
+# Apache 2.2
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Allow from all
+</IfModule>
+
+Options -Indexes
+
+# enable transport compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+    AddOutputFilterByType DEFLATE application/x-font
+    AddOutputFilterByType DEFLATE application/x-font-opentype
+    AddOutputFilterByType DEFLATE application/x-font-otf
+    AddOutputFilterByType DEFLATE application/x-font-truetype
+    AddOutputFilterByType DEFLATE application/x-font-ttf
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE font/opentype
+    AddOutputFilterByType DEFLATE font/otf
+    AddOutputFilterByType DEFLATE font/ttf
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE image/x-icon
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/xml
+</IfModule>
+
+AddType video/mp4 .mp4
+AddType video/webm .webm
+
+
+# use custom 404 page
+# ErrorDocument 404                        /index.php?page.location=404
+
+RewriteEngine On
+
+# SSL
+RewriteCond %{REQUEST_URI} ^/.well-known/
+RewriteRule .* - [L]
+
+# %{REQUEST_SCHEME} not supported in Apache 2.2
+RewriteCond %{HTTPS}                       ^off$
+RewriteRule .*                              -    [E=_REQUEST_SCHEME:http]
+RewriteCond %{HTTPS}                       ^on$
+RewriteRule .*                              -    [E=_REQUEST_SCHEME:https]
+
+# remove trailing dot
+RewriteCond %{ENV:REDIRECT_STATUS}         ^$
+RewriteCond %{HTTP_HOST}                   ^(.+)\.$
+RewriteRule .*                              %{ENV:_REQUEST_SCHEME}://%1%{REQUEST_URI}    [R=301,L,NE,QSA]
+
+# add www
+RewriteCond %{ENV:REDIRECT_STATUS}         ^$
+RewriteCond %{HTTP_HOST}                   ^[^.]+\.[^.]+$
+RewriteCond %{HTTP_HOST}                  !^www\.
+RewriteRule .*                             %{ENV:_REQUEST_SCHEME}://www.%{HTTP_HOST}%{REQUEST_URI}    [R=301,L,NE,QSA]
+
+# redirect to https
+RewriteCond %{ENV:REDIRECT_STATUS}         ^$
+RewriteCond %{HTTPS}                       ^off$
+RewriteCond %{HTTP_HOST}                   !localhost
+RewriteCond %{HTTP_HOST}                   !dev\.poski
+RewriteRule .*                              https://%{HTTP_HOST}%{REQUEST_URI}    [R=301,L,NE,QSA]
+
+# make exception for libraries preprocessing
+RewriteRule ^libraries/.*\.php$             /index.php    [L,QSA,E=page.location:300]
+
+# serve static assets (use simple 404 pages)
+RewriteCond %{REQUEST_URI}                 ^/(favicon\.ico|google.*\.html|.{8}\.htm|\.well-known/pki-validation/fileauth\.txt)$
+RewriteRule .*                              -    [L]
+
+# serve static assets (use simple 404 pages)
+RewriteCond %{REQUEST_URI}                 ^/(assets|modules)/.*\.(webmanifest|map|xap|swf|flv|avi|mp4|mpg|txt|htm|html|htc|css|less|js|ts|png|jpg|gif|pdf|doc|xlsx?|odt|ico|eot|svg|ttf|woff|woff2|json)(\?v=.+)?$
+RewriteRule .*                              -    [L]
+
+# serve uploaded data (use simple 404 pages)
+RewriteCond %{REQUEST_URI}                 ^/(data|libraries)/
+RewriteRule .*                              -    [L]
+
+# make exception for system files
+RewriteCond %{REQUEST_FILENAME}             -f
+RewriteCond %{REQUEST_URI}                 ^/(index|test|phpinfo)\.php$
+RewriteRule .*                              -    [L]
+
+# serve everything else through the system
+RewriteRule .*                              /index.php    [L]

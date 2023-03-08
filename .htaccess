@@ -1,0 +1,6 @@
+# toto nastaveni slouzi pro korektni zabezpeceni na vyvojovem serveru
+order allow,deny
+deny from all
+
+
+

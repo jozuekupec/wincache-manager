@@ -28,19 +28,25 @@ if (!($winCacheStoredData && isset($winCacheStoredData['ucache_entries']))) {
 
 $cacheDataTable = '<table class="cache-table"><tr>' .
     '<th>Klíč</th>' .
-    '<th>Hodnota</th>' .
+    '<th>Typ</th>' .
     '<th>Session</th>' .
     '<th>TTL (seconds)</th>' .
     '<th>AGE (seconds)</th>' .
     '<th>HitCount</th>' .
+    '<th>Hodnota</th>' .
     '</tr>';
 foreach ($winCacheStoredData['ucache_entries'] as $winCacheStoredRecord) {
+    $value = wincache_ucache_get($winCacheStoredRecord['key_name']);
+    if (is_array($value)) {
+        $value = '<pre>' . json_encode($value, JSON_PRETTY_PRINT) . '</pre>';
+    }
     $cacheDataTable .= '<tr>' .
         '<td>' . $winCacheStoredRecord['key_name'] . '</td>' .
         '<td>' . $winCacheStoredRecord['value_type'] . '</td>' .
         '<td>' . ($winCacheStoredRecord['ttl_seconds'] ? 'TRUE' : 'FALSE') . '</td>' .
         '<td>' . $winCacheStoredRecord['age_seconds'] . '</td>' .
         '<td>' . $winCacheStoredRecord['hitcount'] . '</td>' .
+        '<td>' . $value . '</td>' .
         '</tr>';
 }
 
